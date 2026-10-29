@@ -1,0 +1,326 @@
+<Window x:Class="LanChess.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LAN Chess"
+        Width="1180" Height="800" MinWidth="980" MinHeight="720"
+        WindowStartupLocation="CenterScreen"
+        Background="#16181D" Foreground="#E6E6E6" FontFamily="Segoe UI"
+        Loaded="Window_Loaded" Closed="Window_Closed">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="MutedBrush" Color="#8A8F9C"/>
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="#22252C"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#7FA650"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#2E323B"/>
+        </Style>
+
+        <Style x:Key="FieldBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#16181D"/>
+            <Setter Property="Foreground" Value="#E6E6E6"/>
+            <Setter Property="BorderBrush" Value="#3A3F4B"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="#22252C"/>
+            <Setter Property="Foreground" Value="#E6E6E6"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Background" Value="#1C1F25"/>
+            <Setter Property="Foreground" Value="#E6E6E6"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#2F4A2A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Setup: host, join, or open history -->
+        <Grid x:Name="SetupPanel" Margin="40">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <TextBlock Text="Your name" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" Margin="0,0,10,0"/>
+                    <TextBox x:Name="PlayerNameBox" Width="200" Style="{StaticResource FieldBox}" LostFocus="PlayerNameBox_LostFocus"/>
+                </StackPanel>
+                <Button Content="History and stats" Style="{StaticResource GhostButton}" DockPanel.Dock="Right"
+                        HorizontalAlignment="Right" Click="ShowHistory_Click"/>
+            </DockPanel>
+
+            <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Width="940">
+                <TextBlock Text="LAN Chess" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+                <TextBlock Text="Play chess with friends on your local network" Foreground="{StaticResource MutedBrush}"
+                           HorizontalAlignment="Center" Margin="0,4,0,28"/>
+
+                <UniformGrid Columns="2">
+                    <Border Style="{StaticResource Card}" Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Host a game" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="You play White. Friends on your network will see the game in their list."
+                                       Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+                            <TextBlock Text="Time control" Foreground="{StaticResource MutedBrush}" Margin="0,18,0,6"/>
+                            <ComboBox x:Name="TimeControlBox" DisplayMemberPath="Name" Padding="8,6"
+                                      Background="#16181D" Foreground="#E6E6E6"
+                                      SelectionChanged="TimeControlBox_SelectionChanged"/>
+
+                            <StackPanel x:Name="CustomTimePanel" Orientation="Horizontal" Margin="0,10,0,0" Visibility="Collapsed">
+                                <TextBlock Text="Minutes" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="CustomMinutesBox" Width="64" Text="10" Style="{StaticResource FieldBox}"/>
+                                <TextBlock Text="Increment (sec)" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                                <TextBox x:Name="CustomIncrementBox" Width="64" Text="0" Style="{StaticResource FieldBox}"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Port" Foreground="{StaticResource MutedBrush}" Margin="0,18,0,6"/>
+                            <TextBox x:Name="HostPortBox" Text="5055" Style="{StaticResource FieldBox}"/>
+
+                            <Button x:Name="HostButton" Content="Start hosting" Style="{StaticResource PrimaryButton}"
+                                    Margin="0,18,0,0" Click="HostButton_Click"/>
+
+                            <TextBlock x:Name="HostInfoText" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Margin="0,14,0,0" MinHeight="60"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Margin="10,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Join a game" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="You play Black." Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
+
+                            <TextBlock Text="Games on your network" Foreground="{StaticResource MutedBrush}" Margin="0,18,0,6"/>
+                            <ListBox x:Name="LobbyList" Height="150" Background="#16181D" BorderThickness="0"
+                                     MouseDoubleClick="LobbyList_MouseDoubleClick">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding TimeControl}" Foreground="#8A8F9C" FontSize="12"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="#8A8F9C"
+                                                       FontSize="12" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock Text="Double-click a game to join. Nothing listed? Enter the host's address below."
+                                       Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+                            <TextBlock Text="Host's address" Foreground="{StaticResource MutedBrush}" Margin="0,14,0,6"/>
+                            <TextBox x:Name="JoinAddressBox" Style="{StaticResource FieldBox}" Text="192.168.1.10:5055"/>
+
+                            <Button x:Name="JoinButton" Content="Join" Style="{StaticResource PrimaryButton}"
+                                    Margin="0,14,0,0" Click="JoinButton_Click"/>
+
+                            <TextBlock x:Name="JoinStatusText" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Margin="0,10,0,0" MinHeight="40"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+            </StackPanel>
+        </Grid>
+
+        <!-- History and stats -->
+        <Grid x:Name="HistoryPanel" Margin="40" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <DockPanel>
+                <Button Content="Back" Style="{StaticResource GhostButton}" DockPanel.Dock="Left" Click="BackToSetup_Click"/>
+                <TextBlock Text="History and stats" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Margin="18,0,0,0"/>
+            </DockPanel>
+
+            <Grid Grid.Row="1" Margin="0,22,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="360"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,20,0">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Games" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <ListBox x:Name="GamesList" Background="#16181D" BorderThickness="0"
+                                 DisplayMemberPath="Summary" SelectionChanged="GamesList_SelectionChanged"/>
+                    </DockPanel>
+                </Border>
+
+                <StackPanel Grid.Column="1">
+                    <Border Style="{StaticResource Card}">
+                        <TextBlock x:Name="StatsText" FontFamily="Consolas" FontSize="14" LineHeight="22" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="Selected game (PGN)" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <TextBox x:Name="PgnBox" IsReadOnly="True" FontFamily="Consolas" FontSize="13"
+                                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                     Background="#16181D" BorderThickness="0" Padding="10" Height="280"/>
+                        </DockPanel>
+                    </Border>
+
+                    <Button Content="Open saved games folder" Style="{StaticResource GhostButton}"
+                            HorizontalAlignment="Left" Margin="0,16,0,0" Click="OpenGamesFolder_Click"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Game -->
+        <Grid x:Name="GamePanel" Margin="28" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="340"/>
+            </Grid.ColumnDefinitions>
+
+            <Viewbox Grid.Column="0" Margin="0,0,24,0">
+                <Border Background="#2A2D35" CornerRadius="10" Padding="8">
+                    <Grid Width="576" Height="576">
+                        <UniformGrid x:Name="BoardGrid" Rows="8" Columns="8"/>
+
+                        <Border x:Name="PausedOverlay" Background="#E616181D" CornerRadius="4" Visibility="Collapsed">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Paused" FontSize="44" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="PauseSubtitle" Foreground="{StaticResource MutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Viewbox>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border x:Name="OpponentCard" Grid.Row="0" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="OpponentLabel" Text="Opponent" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="OpponentStatusText" FontSize="12" Margin="0,2,0,0"/>
+                            <TextBlock x:Name="GameInfoText" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <TextBlock x:Name="OpponentClock" Grid.Column="1" Text="--" FontFamily="Consolas"
+                                   FontSize="34" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,12">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Moves" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <ScrollViewer x:Name="MoveScroll" VerticalScrollBarVisibility="Auto">
+                            <TextBlock x:Name="MoveText" FontFamily="Consolas" FontSize="14" LineHeight="22" TextWrapping="Wrap"/>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <Border x:Name="MyCard" Grid.Row="2" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="MyLabel" Text="You" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="MyClock" Grid.Column="1" Text="--" FontFamily="Consolas"
+                                   FontSize="34" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="DrawBanner" Grid.Row="3" Background="#3A3320" CornerRadius="10" Padding="14,10"
+                        Margin="0,12,0,0" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock x:Name="DrawBannerText" Text="Your opponent offers a draw." FontWeight="SemiBold"/>
+                        <UniformGrid Columns="2" Margin="0,8,0,0">
+                            <Button x:Name="AcceptDrawButton" Content="Accept" Style="{StaticResource PrimaryButton}"
+                                    Margin="0,0,6,0" Click="AcceptDrawButton_Click"/>
+                            <Button x:Name="DeclineDrawButton" Content="Decline" Style="{StaticResource GhostButton}"
+                                    Margin="6,0,0,0" Click="DeclineDrawButton_Click"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock x:Name="StatusText" Grid.Row="4" Margin="4,14" TextWrapping="Wrap" FontSize="15"/>
+
+                <UniformGrid Grid.Row="5" Columns="2">
+                    <Button x:Name="PauseButton" Content="Pause" Style="{StaticResource PrimaryButton}"
+                            Margin="0,0,6,6" Click="PauseButton_Click"/>
+                    <Button x:Name="DrawButton" Content="Offer draw" Style="{StaticResource GhostButton}"
+                            Margin="6,0,0,6" Click="DrawButton_Click"/>
+                    <Button x:Name="ResignButton" Content="Resign" Style="{StaticResource GhostButton}"
+                            Margin="0,6,6,0" Click="ResignButton_Click"/>
+                    <Button x:Name="LeaveButton" Content="Leave" Style="{StaticResource GhostButton}"
+                            Margin="6,6,0,0" Click="LeaveButton_Click"/>
+                </UniformGrid>
+            </Grid>
+        </Grid>
+
+        <!-- In-app notification -->
+        <Border x:Name="Toast" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,0"
+                Background="#2B2F38" BorderBrush="#7FA650" BorderThickness="1" CornerRadius="10"
+                Padding="18,12" Opacity="0" IsHitTestVisible="False">
+            <TextBlock x:Name="ToastText" FontSize="15" FontWeight="SemiBold"/>
+        </Border>
+    </Grid>
+</Window>

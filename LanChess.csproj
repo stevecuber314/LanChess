@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>LanChess</RootNamespace>
+    <AssemblyName>LanChess</AssemblyName>
+    <AssemblyTitle>LAN Chess</AssemblyTitle>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>
